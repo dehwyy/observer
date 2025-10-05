@@ -7,7 +7,15 @@ import (
 	"github.com/not-for-prod/observer/logger/zap"
 	"github.com/not-for-prod/observer/tracer"
 	"github.com/not-for-prod/observer/tracer/prospan"
+	"golang.org/x/sync/errgroup"
 )
+
+func gar(ctx context.Context) {
+	ctx, span := prospan.Start(ctx)
+	defer span.End()
+
+	span.Logger().Info("gar")
+}
 
 func bar(ctx context.Context) {
 	ctx, span := prospan.Start(ctx)
@@ -16,13 +24,28 @@ func bar(ctx context.Context) {
 	span.Logger().Info("bar")
 }
 
-func foo(ctx context.Context) {
+func foo(ctx context.Context) error {
 	ctx, span := prospan.Start(ctx)
 	defer span.End()
 
 	span.Logger().Info("foo")
 
-	bar(ctx)
+	group, ctx := errgroup.WithContext(ctx)
+
+	group.Go(
+		func() error {
+			bar(ctx)
+			return nil
+		},
+	)
+	group.Go(
+		func() error {
+			gar(ctx)
+			return nil
+		},
+	)
+
+	return group.Wait()
 }
 
 func main() {

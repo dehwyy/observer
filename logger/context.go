@@ -5,22 +5,22 @@ import "context"
 const presetKeys = "logger-preset-keys"
 
 func Upsert(ctx context.Context, keysValues ...any) (context.Context, []any) {
-	ctxKV, ok := ctx.Value(presetKeys).(map[any]any)
-	if !ok {
-		ctxKV = toMap(keysValues...)
+	existing, _ := ctx.Value(presetKeys).(map[any]any)
+	kvs := make(map[any]any, len(existing)+len(keysValues)/2)
+
+	for k, v := range existing {
+		kvs[k] = v
 	}
 
 	newValues := toMap(keysValues...)
-
 	for key, value := range newValues {
-		ctxKV[key] = value
+		kvs[key] = value
 	}
 
-	ctx = context.WithValue(ctx, presetKeys, ctxKV)
+	ctx = context.WithValue(ctx, presetKeys, kvs)
+	kv := make([]interface{}, 0, len(kvs))
 
-	kv := make([]interface{}, 0, len(ctxKV))
-
-	for key, val := range ctxKV {
+	for key, val := range kvs {
 		kv = append(kv, key)
 		kv = append(kv, val)
 	}

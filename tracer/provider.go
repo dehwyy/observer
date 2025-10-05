@@ -42,22 +42,25 @@ func (p *Provider) Start(ctx context.Context) error {
 		return err
 	}
 
+	res, err := resource.New(
+		ctx,
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String(p.options.serviceName),
+		),
+	)
+	if err != nil {
+		return err
+	}
+
 	p.provider = tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(p.exporter),
-		tracesdk.WithResource(
-			resource.NewWithAttributes(
-				semconv.SchemaURL,
-				semconv.ServiceNameKey.String(p.options.serviceName),
-				semconv.ServiceVersionKey.String(p.options.serviceVersion),
-			),
-		),
+		tracesdk.WithResource(res),
 	)
 
 	otel.SetTracerProvider(p.provider)
 	otel.SetTextMapPropagator(
 		propagation.NewCompositeTextMapPropagator(
 			propagation.TraceContext{},
-			propagation.Baggage{},
 		),
 	)
 
