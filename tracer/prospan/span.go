@@ -16,7 +16,7 @@ type ProSpan struct {
 
 // Start starts the prospan.
 func Start(ctx context.Context) (context.Context, ProSpan) {
-	builder := New()
+	builder := &Builder{}
 	builder.skipFrames++
 
 	return builder.Start(ctx)
@@ -35,6 +35,12 @@ func (s *ProSpan) Err(err error) error {
 	}
 
 	return err
+}
+
+func (s *ProSpan) SetAttribute(key string, val any) *ProSpan {
+	setAttr(s.span, key, val)
+
+	return s
 }
 
 func (s *ProSpan) Span() trace.Span {

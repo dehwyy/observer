@@ -25,10 +25,12 @@ func bar(ctx context.Context) {
 }
 
 func foo(ctx context.Context) error {
-	ctx, span := prospan.Start(ctx)
+	ctx, span := prospan.WithAttribute("req", "test").Start(ctx)
 	defer span.End()
 
-	span.Logger().Info("foo")
+	span.SetAttribute("custom-attr", 12345).
+		SetAttribute("custom-attr", "custom-val").
+		Logger().Info("foo")
 
 	group, ctx := errgroup.WithContext(ctx)
 
